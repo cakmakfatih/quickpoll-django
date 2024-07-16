@@ -116,3 +116,7 @@ class UserList(APIView):
         serializer = UserSerializer(user)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class VoteList(APIView):
+    pass
