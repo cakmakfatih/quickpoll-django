@@ -149,6 +149,7 @@ class VoteList(APIView):
             user.save()
 
         vote = None
+        status_code = None
         existing_vote = self.get_vote_for_existing_poll(user, request.data["poll"])
 
         if existing_vote is None:
@@ -159,6 +160,7 @@ class VoteList(APIView):
                     "option": request.data["option"],
                 }
             )
+            status_code = status.HTTP_201_CREATED
         elif existing_vote.option.id == request.data["option"]:
             return Response(
                 {"message": "Already voted for this option."},
@@ -174,8 +176,9 @@ class VoteList(APIView):
                     "option": request.data["option"],
                 }
             )
+            status_code = status.HTTP_200_OK
 
         if vote.is_valid():
             vote.save()
 
-        return Response(vote.data, status=status.HTTP_201_CREATED)
+        return Response(vote.data, status=status_code)
