@@ -8,6 +8,8 @@ from .serializers import (
     OptionSerializer,
     UserSerializer,
     PollDetailSerializer,
+    VotePostSerializer,
+    VoteSerializer,
 )
 from .models import Option, Poll, User, Vote
 from .functions import get_client_ip
@@ -122,6 +124,58 @@ class UserList(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class VoteDetails(APIView):
-    def post(self, request):
-        pass
+class VoteList(APIView):
+    def get_vote_for_existing_poll(
+        self,
+        user: User,
+        poll_id: str,
+    ) -> Vote:
+        try:
+            return Vote.objects.get(user=user.id, poll=poll_id)
+        except Vote.DoesNotExist:
+            return None
+
+    def post(self, request, format=None):
+        serializer = VotePostSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        ip = get_client_ip(request)
+        user = get_user_from_ip(ip)
+
+        if user is None:
+            user = User(ip=ip)
+            user.save()
+
+        vote = None
+        existing_vote = self.get_vote_for_existing_poll(user, request.data["poll"])
+
+        if existing_vote is None:
+            vote = VotePostSerializer(
+                data={
+                    "user": user.id,
+                    "poll": request.data["poll"],
+                    "option": request.data["option"],
+                }
+            )
+        elif existing_vote.option.id == request.data["option"]:
+            return Response(
+                {"message": "Already voted for this option."},
+                status=status.HTTP_208_ALREADY_REPORTED,
+            )
+        else:
+            existing_vote.delete()
+
+            vote = VotePostSerializer(
+                data={
+                    "user": user.id,
+                    "poll": request.data["poll"],
+                    "option": request.data["option"],
+                }
+            )
+
+        if vote.is_valid():
+            vote.save()
+
+        return Response(vote.data, status=status.HTTP_201_CREATED)

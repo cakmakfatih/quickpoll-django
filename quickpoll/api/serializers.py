@@ -33,3 +33,9 @@ class PollDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Poll
         fields = "__all__"
+
+
+class VotePostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vote
+        fields = "__all__"

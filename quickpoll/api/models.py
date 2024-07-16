@@ -30,6 +30,6 @@ class Option(models.Model):
 
 
 class Vote(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     option = models.ForeignKey(Option, on_delete=models.CASCADE)
     poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
