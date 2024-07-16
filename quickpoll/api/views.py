@@ -13,6 +13,34 @@ from .models import Option, Poll, User, Vote
 from .functions import get_client_ip
 
 
+def get_user_from_ip(ip: str):
+    try:
+        return User.objects.get(ip=ip)
+    except User.DoesNotExist:
+        return None
+
+
+def get_poll(pk) -> Poll:
+    try:
+        return Poll.objects.get(pk=pk)
+    except Poll.DoesNotExist:
+        raise Http404
+
+
+def get_options(poll_id) -> List[Option]:
+    try:
+        return Option.objects.filter(poll=poll_id)
+    except Option.DoesNotExist:
+        raise Http404
+
+
+def get_votes(poll_id) -> List[Vote]:
+    try:
+        return Vote.objects.filter(poll=poll_id)
+    except Vote.DoesNotExist:
+        return []
+
+
 class PollList(APIView):
     def post(self, request, format=None):
         poll_serializer = PollSerializer(data=request.data)
@@ -61,28 +89,10 @@ class PollList(APIView):
 
 
 class PollDetails(APIView):
-    def get_poll(self, pk) -> Poll:
-        try:
-            return Poll.objects.get(pk=pk)
-        except Poll.DoesNotExist:
-            raise Http404
-
-    def get_options(self, poll_id) -> List[Option]:
-        try:
-            return Option.objects.filter(poll=poll_id)
-        except Option.DoesNotExist:
-            raise Http404
-
-    def get_votes(self, poll_id) -> List[Vote]:
-        try:
-            return Vote.objects.filter(poll=poll_id)
-        except Vote.DoesNotExist:
-            return []
-
     def get(self, request, pk, format=None):
-        poll = self.get_poll(pk)
-        options = self.get_options(pk)
-        votes = self.get_votes(pk)
+        poll = get_poll(pk)
+        options = get_options(pk)
+        votes = get_votes(pk)
 
         serializer = PollDetailSerializer(
             {"id": poll.id, "title": poll.title, "options": options, "votes": votes}
@@ -95,15 +105,9 @@ class PollDetails(APIView):
 
 
 class UserList(APIView):
-    def get_user_from_ip(self, ip: str):
-        try:
-            return User.objects.get(ip=ip)
-        except User.DoesNotExist:
-            return None
-
     def post(self, request, format=None):
         ip = get_client_ip(request)
-        user = self.get_user_from_ip(ip)
+        user = get_user_from_ip(ip)
 
         if user is not None:
             serializer = UserSerializer(user)
@@ -118,5 +122,6 @@ class UserList(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class VoteList(APIView):
-    pass
+class VoteDetails(APIView):
+    def post(self, request):
+        pass
