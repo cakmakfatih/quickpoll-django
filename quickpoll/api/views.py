@@ -1,3 +1,4 @@
+import datetime
 from typing import List
 from django.http import Http404
 from rest_framework.views import APIView
@@ -97,7 +98,14 @@ class PollDetails(APIView):
         votes = get_votes(pk)
 
         serializer = PollDetailSerializer(
-            {"id": poll.id, "title": poll.title, "options": options, "votes": votes}
+            {
+                "id": poll.id,
+                "title": poll.title,
+                "created_at": poll.created_at,
+                "remaining_seconds": poll.remaining_seconds,
+                "options": options,
+                "votes": votes,
+            }
         )
 
         return Response(
@@ -143,6 +151,13 @@ class VoteList(APIView):
 
         ip = get_client_ip(request)
         user = get_user_from_ip(ip)
+        poll = get_poll(request.data["poll"])
+
+        if not poll.is_votable:
+            return Response(
+                {"message": "Poll is already closed."},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED,
+            )
 
         if user is None:
             user = User(ip=ip)

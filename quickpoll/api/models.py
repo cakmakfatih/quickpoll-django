@@ -1,3 +1,4 @@
+import datetime
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 import uuid
@@ -17,11 +18,32 @@ class Poll(models.Model):
         default=uuid.uuid4, unique=True, primary_key=True, editable=False
     )
     title = models.CharField(max_length=255)
-    is_open = models.BooleanField(default=True)
     duration = models.CharField(
         max_length=3, choices=Duration.choices, default=Duration.FIVE_MIN
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def remaining_seconds(self):
+        now = datetime.datetime.now(datetime.UTC)
+        difference_in_seconds = int(((now) - self.created_at).total_seconds())
+        remaining_seconds = 0
+
+        if self.duration == "1M":
+            remaining_seconds = (1 * 60) - difference_in_seconds
+        elif self.duration == "5M":
+            remaining_seconds = (5 * 60) - difference_in_seconds
+        elif self.duration == "10M":
+            remaining_seconds = (10 * 60) - difference_in_seconds
+
+        if remaining_seconds < 0:
+            return 0
+
+        return remaining_seconds
+
+    @property
+    def is_votable(self):
+        return self.remaining_seconds > 0
 
 
 class Option(models.Model):

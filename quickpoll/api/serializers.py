@@ -23,12 +23,13 @@ class UserSerializer(serializers.ModelSerializer):
 class VoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vote
-        fields = ["id"]
+        fields = ["option"]
 
 
 class PollDetailSerializer(serializers.ModelSerializer):
     options = OptionSerializer(many=True)
     votes = VoteSerializer(many=True)
+    remaining_seconds = serializers.IntegerField(default=0)
 
     class Meta:
         model = Poll
