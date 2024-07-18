@@ -10,6 +10,7 @@ class User(models.Model):
 
 class Poll(models.Model):
     class Duration(models.TextChoices):
+        ENDLESS = "EM", _("E minute")
         ONE_MIN = "1M", _("1 minute")
         FIVE_MIN = "5M", _("5 minutes")
         TEN_MIN = "10M", _("10 minutes")
@@ -25,6 +26,9 @@ class Poll(models.Model):
 
     @property
     def remaining_seconds(self):
+        if self.duration == "EM":
+            return -1
+
         now = datetime.datetime.now(datetime.UTC)
         difference_in_seconds = int(((now) - self.created_at).total_seconds())
         remaining_seconds = 0
@@ -43,6 +47,9 @@ class Poll(models.Model):
 
     @property
     def is_votable(self):
+        if self.remaining_seconds == -1:
+            return True
+
         return self.remaining_seconds > 0
 
 

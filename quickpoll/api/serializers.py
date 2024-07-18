@@ -3,6 +3,9 @@ from .models import Poll, Option, User, Vote
 
 
 class PollSerializer(serializers.ModelSerializer):
+    remaining_seconds = serializers.ReadOnlyField()
+    is_votable = serializers.ReadOnlyField()
+
     class Meta:
         model = Poll
         fields = "__all__"
