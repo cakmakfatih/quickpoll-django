@@ -39,13 +39,13 @@ def get_options(poll_id) -> List[Option]:
 
 def get_votes(poll_id) -> List[Vote]:
     try:
-        return Vote.objects.filter(poll=poll_id)
+        return Vote.objects.filter(poll=poll_id).order_by("-id")
     except Vote.DoesNotExist:
         return []
 
 
 class PollList(APIView):
-    queryset = Poll.objects.all()
+    queryset = Poll.objects.all().order_by("-created_at")
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @property
