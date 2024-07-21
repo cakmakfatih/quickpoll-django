@@ -55,7 +55,7 @@ def get_vote_for_existing_poll(
 
 
 class PollList(APIView):
-    queryset = Poll.objects.all().order_by("-created_at")
+    queryset = Poll.objects.filter(is_private=False).order_by("-created_at")
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
     @property
