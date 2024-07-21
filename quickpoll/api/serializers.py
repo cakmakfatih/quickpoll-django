@@ -33,6 +33,7 @@ class PollDetailSerializer(serializers.ModelSerializer):
     options = OptionSerializer(many=True)
     votes = VoteSerializer(many=True)
     remaining_seconds = serializers.IntegerField(default=0)
+    user_has_voted = serializers.BooleanField(default=False)
 
     class Meta:
         model = Poll

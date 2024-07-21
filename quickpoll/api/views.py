@@ -144,17 +144,16 @@ class PollDetails(APIView):
             "options": options,
         }
 
+        ip = get_client_ip(request)
+        user = get_user_from_ip(ip)
+        existing_vote = get_vote_for_existing_poll(user, poll.id)
+
+        data["user_has_voted"] = True if existing_vote != None else False
+
         if poll.votes_visible:
             data["votes"] = votes
         else:
-            ip = get_client_ip(request)
-            user = get_user_from_ip(ip)
-            existing_vote = get_vote_for_existing_poll(user, poll.id)
-
-            if existing_vote != None:
-                data["votes"] = votes
-            else:
-                data["votes"] = None
+            data["votes"] = votes if data["user_has_voted"] else None
 
         serializer = PollDetailSerializer(data)
 
