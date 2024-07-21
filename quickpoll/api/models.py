@@ -22,6 +22,8 @@ class Poll(models.Model):
     duration = models.CharField(
         max_length=3, choices=Duration.choices, default=Duration.FIVE_MIN
     )
+    votes_visible = models.BooleanField(default=True)
+    votes_changable = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property

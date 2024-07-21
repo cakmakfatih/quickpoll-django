@@ -44,6 +44,16 @@ def get_votes(poll_id) -> List[Vote]:
         return []
 
 
+def get_vote_for_existing_poll(
+    user: User,
+    poll_id: str,
+) -> Vote:
+    try:
+        return Vote.objects.get(user=user.id, poll=poll_id)
+    except Vote.DoesNotExist:
+        return None
+
+
 class PollList(APIView):
     queryset = Poll.objects.all().order_by("-created_at")
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
@@ -126,16 +136,27 @@ class PollDetails(APIView):
         options = get_options(pk)
         votes = get_votes(pk)
 
-        serializer = PollDetailSerializer(
-            {
-                "id": poll.id,
-                "title": poll.title,
-                "created_at": poll.created_at,
-                "remaining_seconds": poll.remaining_seconds,
-                "options": options,
-                "votes": votes,
-            }
-        )
+        data = {
+            "id": poll.id,
+            "title": poll.title,
+            "created_at": poll.created_at,
+            "remaining_seconds": poll.remaining_seconds,
+            "options": options,
+        }
+
+        if poll.votes_visible:
+            data["votes"] = votes
+        else:
+            ip = get_client_ip(request)
+            user = get_user_from_ip(ip)
+            existing_vote = get_vote_for_existing_poll(user, poll.id)
+
+            if existing_vote != None:
+                data["votes"] = votes
+            else:
+                data["votes"] = None
+
+        serializer = PollDetailSerializer(data)
 
         return Response(
             serializer.data,
@@ -162,16 +183,6 @@ class UserList(APIView):
 
 
 class VoteList(APIView):
-    def get_vote_for_existing_poll(
-        self,
-        user: User,
-        poll_id: str,
-    ) -> Vote:
-        try:
-            return Vote.objects.get(user=user.id, poll=poll_id)
-        except Vote.DoesNotExist:
-            return None
-
     def post(self, request, format=None):
         serializer = VotePostSerializer(data=request.data)
 
@@ -194,7 +205,15 @@ class VoteList(APIView):
 
         vote = None
         status_code = None
-        existing_vote = self.get_vote_for_existing_poll(user, request.data["poll"])
+        existing_vote = get_vote_for_existing_poll(user, request.data["poll"])
+
+        if existing_vote is not None and not poll.votes_changable:
+            return Response(
+                {
+                    "message": "This vote doesn't allow changing the selected option.",
+                },
+                status=status.HTTP_208_ALREADY_REPORTED,
+            )
 
         if existing_vote is None:
             vote = VotePostSerializer(
