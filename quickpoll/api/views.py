@@ -141,6 +141,9 @@ class PollDetails(APIView):
             "title": poll.title,
             "created_at": poll.created_at,
             "remaining_seconds": poll.remaining_seconds,
+            "votes_changable": poll.votes_changable,
+            "votes_visible": poll.votes_visible,
+            "is_private": poll.is_private,
             "options": options,
         }
 

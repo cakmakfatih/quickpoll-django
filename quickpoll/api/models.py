@@ -24,6 +24,7 @@ class Poll(models.Model):
     )
     votes_visible = models.BooleanField(default=True)
     votes_changable = models.BooleanField(default=True)
+    is_private = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property
