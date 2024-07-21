@@ -191,6 +191,20 @@ class VoteList(APIView):
         ip = get_client_ip(request)
         user = get_user_from_ip(ip)
         poll = get_poll(request.data["poll"])
+        poll_options = get_options(poll.id)
+
+        option_is_valid = False
+
+        for opt in poll_options:
+            if opt.id == request.data["option"]:
+                option_is_valid = True
+                break
+
+        if not option_is_valid:
+            return Response(
+                {"message": "Selected option does not exist in the poll."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if not poll.is_votable:
             return Response(
